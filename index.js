@@ -2,7 +2,7 @@ const rp = require('request-promise');
 
 module.exports = {
 
-  afterConstruct: function(self, options) {
+  afterConstruct: function(self) {
     self.addStandardPlatforms();
     self.addStandardEventListeners();
   },
@@ -11,14 +11,15 @@ module.exports = {
 
     self.platforms = {};
 
-    self.addPlatform = (name, fn) {
+    self.addPlatform = function(name, fn) {
       self.platforms[name] = fn;
     };
 
-    self.notifyOn = (event, fn) {
+    self.notifyOn = function(event, fn) {
 
       self.on(event, 'notify' + self.apos.utils.capitalizeFirst(event), function() {
-        const req = (args[0] && args[0].res && args[0].res.__) ? args[0] : null;
+        console.log('I AM NOTIFIED OF SOMETHING for ' + event);
+        const req = (arguments[0] && arguments[0].res && arguments[0].res.__) ? arguments[0] : null;
         let formatArgs = fn.apply(null, arguments);
         const formatted = self.format(req, formatArgs[0], ...formatArgs.slice(1));
         let queue;
@@ -56,21 +57,25 @@ module.exports = {
       }
       queue.sending = false;
       // Deliberately NOT awaited
-      self.runQueue();
+      self.runQueue(queue);
     };
 
-    self.sendOne = async (message) => {
+    self.sendOne = async function(message) {
       for (const name of Object.keys(self.platforms)) {
+        const options = self.options.platforms[name];
+        if (!options) {
+          continue;
+        }
         const platform = self.platforms[name];
         let channels = self.mapToChannels(name, message);
         // Like _.uniq
         channels = [...new Set(channels)]; 
-        await self.platforms[name](message.req, channels, message);
+        await self.platforms[name](message.req, options, channels, message);
       }
     };
 
-    self.mapToChannels = (platformName, message) => {
-      const channels = [];
+    self.mapToChannels = function(platformName, message) {
+      let channels = [];
       const options = self.options.platforms[platformName];
       if (!options) {
         return channels;
@@ -84,15 +89,26 @@ module.exports = {
         }
       }
       return channels;
+
+      function oneOrMore(a) {
+        if (Array.isArray(a)) {
+          return a;
+        }
+        return [ a ];
+      }
+
     };
 
-    self.format = (req, template, ...args) {
+    self.format = function(req, template, ...args) {
       let output = '';
-      const parts = template.split(/(\{user\}|\{title\}|\{string\})/);
-      const i = 0;
+      const parts = template.split(/(\{(?:user|type|title|string)\})/);
+      let i = 0;
       for (const part of parts) {
         if (part === '{user}') {
-          output += (req && req.user && req.user.username) || 'Anonymous';
+          const title = req && req.user && req.user.title;
+          const username = (req && req.user && req.user.username) || 'Anonymous';
+          const name = title ? `${title} (${username})` : username;
+          output += name;
         } else if (part === '{type}') {
           if (i >= args.length) {
             output += 'Undefined';
@@ -133,17 +149,30 @@ module.exports = {
       return output;
     };
 
-    self.slack = async function(req, channels, message) {
+    self.slack = async function(req, options, channels, message) {
       for (const channel of channels) {
-        const options = self.options.platforms['slack'];
         if (!options) {
           throw new Error('You must configure the slack platform when configuring the `apostrophe-external-notifications` module');
         }
         if (!(options.webhooks && options.webhooks[channel])) {
           throw new Error('You must configure the webhooks option for each channel used when configuring the `apostrophe-external-notifications` module for slack');
         }
-        await rp.post(options.webhooks[channel], {
-          text: message.formatted
+        const args = {
+          method: 'POST', 
+          uri: options.webhooks[channel],
+          json: true,
+          body: {
+            text: message.formatted
+          }
+        };
+        console.log(args);
+        await rp({
+          method: 'POST', 
+          uri: options.webhooks[channel],
+          json: true,
+          body: {
+            text: message.formatted
+          }
         });
       }
     };
@@ -156,9 +185,10 @@ module.exports = {
       self.notifyOn('apostrophe-workflow:afterCommit', (req, commit) => [
         '{user} committed the {type} {title}', commit.from, commit.from
       ]);
-      self.notifyOn('apostrophe-workflow:afterExport', (req, exported) => [
-        '{user} exported the {type} {title} to {string}', exported.from, exported.from, exported.toLocales
-      ]);
+      self.notifyOn('apostrophe-workflow:afterExport', (req, exported) => {
+        console.log('in afterExport', req.user, exported.from.title);
+        return [ '{user} exported the {type} {title} to {string}', exported.from, exported.from, exported.toLocales ];
+      });
       self.notifyOn('apostrophe-workflow:afterForceExport', (req, exported) => [
         '{user} force-exported the {type} {title} to {string}', exported.from, exported.from, exported.toLocales
       ]);
