@@ -81,19 +81,38 @@ module.exports = {
 
     self.format = (req, template, ...args) {
       let output = '';
-      const parts = template.split(/(%u|%s|$t)/);
+      const parts = template.split(/(\{user\}|\{title\}|\{string\})/);
       const i = 0;
       for (const part of parts) {
-        if (part === '%u') {
+        if (part === '{user}') {
           output += (req && req.user && req.user.username) || 'Anonymous';
-        } else if (part === '%t') {
+        } else if (part === '{type}') {
+          if (i >= args.length) {
+            output += 'Undefined';
+          } else {
+            const type = args[i] && args[i].type;
+            if (!type) {
+              output += 'Undefined';
+            } else {
+              const manager = self.apos.docs.getManager(type);
+              if (manager && manager.options.label) {
+                output += manager.options.label;
+              } else if (self.apos.pages.isPage(args[i])) {
+                output += 'page';
+              } else {
+                output += type;
+              }
+            }
+            i++;
+          }
+        } else if (part === '{title}') {
           if (i >= args.length) {
             output += 'Undefined';
           } else {
             output += (args[i] && (args[i].title || args[i].slug)) || 'Unknown';
             i++;
           }
-        } else if (part === '%s') {
+        } else if (part === '{string}') {
           if (i >= args.length) {
             output += 'Undefined';
           } else {
@@ -109,10 +128,15 @@ module.exports = {
 
     self.apos.externals.addPlatform('slack', async (req, channels, message) => {
       for (const channel of channels) {
-        await rp.post('https://slack.com/', {
-          message,
-          channel,
-          apiKey: self.options.platforms.slack.apiKey
+        const options = self.options.platforms['slack'];
+        if (!options) {
+          throw new Error('You must configure the slack platform when configuring the `apostrophe-external-notifications` module');
+        }
+        if (!(options.webhooks && options.webhooks[channel])) {
+          throw new Error('You must configure the webhooks option for each channel used when configuring the `apostrophe-external-notifications` module for slack');
+        }
+        await rp.post(options.webhooks[channel], {
+          text: message.formatted
         });
       }
     });

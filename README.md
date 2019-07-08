@@ -23,15 +23,18 @@ npm install apostrophe-external-notifications
           clientID: 'YOUR-slack-app-client-ID-goes-here',
           clientSecret: 'YOUR-slack-app-client-secret-goes-here',
           // See below for a more nuanced way to do this
-          channel: [ '#apostrophe-edits' ]
+          channel: [ '#apostrophe-edits' ],
+          webhooks: {
+            '#apostrophe-edits': 'https://hooks.slack.com/services/GO/GET-YOUR-OWN'
+          }
         }
       }
     }
   }
 ```
 
-> To get a Slack client ID and client secret, you need to [register a Slack "app" here](https://api.slack.com/apps?new_app=1).
->
+> To get a Slack client ID and client secret, you need to [register a Slack "app" here](https://api.slack.com/apps?new_app=1). After copying that information, click "Incoming Webhooks," then be sure to turn them on. Now click "Add New Webhook to Workspace" and select the desired channel. Finally, copy and paste the resulting webhook URL into the `webhooks` configuration as shown above.
+
 ### Sending different events to different channels
 
 The simple configuration above sends everything to the `#apostrophe-edits` channel in Slack. You can also break down which events go to which channels:
@@ -48,6 +51,10 @@ The simple configuration above sends everything to the `#apostrophe-edits` chann
             'apostrophe-workflow:afterCommit': '#apostrophe-commits',
             'apostrophe-workflow:afterExport': '#apostrophe-exports',
             'apostrophe-workflow:afterForceExport': '#apostrophe-exports'
+          },
+          webhooks: {
+            '#apostrophe-commits': 'https://hooks.slack.com/services/GO/GET-YOUR-OWN-1',
+            '#apostrophe-exports': 'https://hooks.slack.com/services/GO/GET-YOUR-OWN-2'
           }
         }
       }
@@ -58,6 +65,8 @@ The simple configuration above sends everything to the `#apostrophe-edits` chann
 If you do not configure the shared `channel` option, then **only the events you individually configure are sent to Slack at all.** You may also do it both ways.
 
 > Anywhere you see channels configured above, you can specify **either an array of channels or a single channel**.
+> 
+> If you configure more than one channel, you must also create and paste in the "webhook" URLs for each of them.
 
 ## Limitations
 
