@@ -1,5 +1,5 @@
 {
-  "name": "apostrophe-slack",
+  "name": "apostrophe-external-notifications",
   "version": "1.0.0",
   "description": "Send notifications to Slack when various events occur in ApostropheCMS",
   "main": "index.js",
@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/apostrophecms/apostrophe-slack.git"
+    "url": "git+https://github.com/apostrophecms/apostrophe-external-notifications.git"
   },
   "keywords": [
     "apostrophecms",
@@ -16,13 +16,13 @@
     "management",
     "system",
     "cms",
-    "slack",
+    "external-notifications",
     "apostrophe"
   ],
   "author": "P'unk Avenue LLC",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/apostrophecms/apostrophe-slack/issues"
+    "url": "https://github.com/apostrophecms/apostrophe-external-notifications/issues"
   },
-  "homepage": "https://github.com/apostrophecms/apostrophe-slack#readme"
+  "homepage": "https://github.com/apostrophecms/apostrophe-external-notifications#readme"
 }

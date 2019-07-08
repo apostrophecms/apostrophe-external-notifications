@@ -2,6 +2,11 @@ const rp = require('request-promise');
 
 module.exports = {
 
+  afterConstruct: function(self, options) {
+    self.addStandardPlatforms();
+    self.addStandardEventListeners();
+  },
+
   construct: function(self, options) {
 
     self.platforms = {};
@@ -54,10 +59,12 @@ module.exports = {
       self.runQueue();
     };
 
-    self.sendOne = async (message) {
+    self.sendOne = async (message) => {
       for (const name of Object.keys(self.platforms)) {
         const platform = self.platforms[name];
-        const channels = self.mapToChannels(name, message);
+        let channels = self.mapToChannels(name, message);
+        // Like _.uniq
+        channels = [...new Set(channels)]; 
         await self.platforms[name](message.req, channels, message);
       }
     };
@@ -126,7 +133,7 @@ module.exports = {
       return output;
     };
 
-    self.apos.externals.addPlatform('slack', async (req, channels, message) => {
+    self.slack = async function(req, channels, message) {
       for (const channel of channels) {
         const options = self.options.platforms['slack'];
         if (!options) {
@@ -139,7 +146,23 @@ module.exports = {
           text: message.formatted
         });
       }
-    });
+    };
+
+    self.addStandardPlatforms = function() {
+      self.addPlatform('slack', self.slack);
+    };
+
+    self.addStandardEventListeners = function() {
+      self.notifyOn('apostrophe-workflow:afterCommit', (req, commit) => [
+        '{user} committed the {type} {title}', commit.from, commit.from
+      ]);
+      self.notifyOn('apostrophe-workflow:afterExport', (req, exported) => [
+        '{user} exported the {type} {title} to {string}', exported.from, exported.from, exported.toLocales
+      ]);
+      self.notifyOn('apostrophe-workflow:afterForceExport', (req, exported) => [
+        '{user} force-exported the {type} {title} to {string}', exported.from, exported.from, exported.toLocales
+      ]);
+    };
 
   }
 
