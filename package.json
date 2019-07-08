@@ -1,0 +1,28 @@
+{
+  "name": "apostrophe-slack",
+  "version": "1.0.0",
+  "description": "Send notifications to Slack when various events occur in ApostropheCMS",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/apostrophecms/apostrophe-slack.git"
+  },
+  "keywords": [
+    "apostrophecms",
+    "content",
+    "management",
+    "system",
+    "cms",
+    "slack",
+    "apostrophe"
+  ],
+  "author": "P'unk Avenue LLC",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/apostrophecms/apostrophe-slack/issues"
+  },
+  "homepage": "https://github.com/apostrophecms/apostrophe-slack#readme"
+}
