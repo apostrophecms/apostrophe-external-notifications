@@ -18,7 +18,6 @@ module.exports = {
     self.notifyOn = function(event, fn) {
 
       self.on(event, 'notify' + self.apos.utils.capitalizeFirst(event), function() {
-        console.log('I AM NOTIFIED OF SOMETHING for ' + event);
         const req = (arguments[0] && arguments[0].res && arguments[0].res.__) ? arguments[0] : null;
         let formatArgs = fn.apply(null, arguments);
         const formatted = self.format(req, formatArgs[0], ...formatArgs.slice(1));
@@ -117,13 +116,17 @@ module.exports = {
             if (!type) {
               output += 'Undefined';
             } else {
-              const manager = self.apos.docs.getManager(type);
-              if (manager && manager.options.label) {
-                output += manager.options.label;
-              } else if (self.apos.pages.isPage(args[i])) {
-                output += 'page';
+              if (type === 'apostrophe-global') {
+                output += 'shared document';
               } else {
-                output += type;
+                const manager = self.apos.docs.getManager(type);
+                if (manager && manager.options.label) {
+                  output += manager.options.label;
+                } else if (self.apos.pages.isPage(args[i])) {
+                  output += 'page';
+                } else {
+                  output += type;
+                }
               }
             }
             i++;
@@ -139,7 +142,11 @@ module.exports = {
           if (i >= args.length) {
             output += 'Undefined';
           } else {
-            output += args[i];
+            if (Array.isArray(args[i])) {
+              output += args[i].join(', ');
+            } else {
+              output += args[i];
+            }
             i++;
           }
         } else {
@@ -165,7 +172,6 @@ module.exports = {
             text: message.formatted
           }
         };
-        console.log(args);
         await rp({
           method: 'POST', 
           uri: options.webhooks[channel],
@@ -183,15 +189,22 @@ module.exports = {
 
     self.addStandardEventListeners = function() {
       self.notifyOn('apostrophe-workflow:afterCommit', (req, commit) => [
-        '{user} committed the {type} {title}', commit.from, commit.from
+        '{user} committed the {type} {title} in {string}', commit.from, commit.from, liveify(commit.from.workflowLocale)
       ]);
-      self.notifyOn('apostrophe-workflow:afterExport', (req, exported) => {
-        console.log('in afterExport', req.user, exported.from.title);
-        return [ '{user} exported the {type} {title} to {string}', exported.from, exported.from, exported.toLocales ];
-      });
+      self.notifyOn('apostrophe-workflow:afterExport', (req, exported) => [
+        '{user} exported the {type} {title} from {string} to {string}', exported.from, exported.from, liveify(exported.from.workflowLocale), liveify(exported.toLocales)
+      ]);
       self.notifyOn('apostrophe-workflow:afterForceExport', (req, exported) => [
-        '{user} force-exported the {type} {title} to {string}', exported.from, exported.from, exported.toLocales
+        '{user} force-exported the {type} {title} from {string} to {string}', exported.from, exported.from, liveify(exported.from.workflowLocale), liveify(exported.toLocales)
       ]);
+      // Change en-draft to en, or [en-draft] to [en]
+      function liveify(a) {
+        const workflow = self.apos.modules['apostrophe-workflow'];
+        if (!Array.isArray(a)) {
+          return workflow.liveify(a);
+        }
+        return a.map(locale => workflow.liveify(locale));
+      }
     };
 
   }
