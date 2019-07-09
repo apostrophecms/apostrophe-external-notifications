@@ -68,6 +68,18 @@ If you do not configure the shared `channel` option, then **only the events you 
 
 There must be an Apostrophe promise event associated with what you want notifications for, and an external notification handler must be registered for that event. `apostrophe-external-notifications` has handlers for some popular cases, but not all.
 
+## Built-in event listeners: what you can get without writing any code
+
+Currently the following event handlers have listeners built into this module:
+
+```
+apostrophe-workflow:afterCommit
+apostrophe-workflow:afterExport
+apostrophe-workflow:afterForceExport
+```
+
+More event handlers are coming. In the meantime, you can add support for more events yourself, as shown below. We suggest doing so as a PR on the module in question so that the community benefits and you are aware when we add a handler that would otherwise duplicate yours.
+
 ## Adding support for more events
 
 Here's how you might add support for the `afterCommit` event, if we didn't already have it. **This code assumes you gave the module an alias in your project,** as seen above.
