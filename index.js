@@ -17,9 +17,9 @@ module.exports = {
 
     self.notifyOn = function(event, fn) {
 
-      self.on(event, 'notify' + self.apos.utils.capitalizeFirst(event), function() {
+      self.on(event, 'notify' + self.apos.utils.capitalizeFirst(event), async function() {
         const req = (arguments[0] && arguments[0].res && arguments[0].res.__) ? arguments[0] : null;
-        let formatArgs = fn.apply(null, arguments);
+        let formatArgs = await fn.apply(null, arguments);
         const formatted = self.format(req, formatArgs[0], ...formatArgs.slice(1));
         let queue;
         if (req) {
@@ -65,10 +65,9 @@ module.exports = {
         if (!options) {
           continue;
         }
-        const platform = self.platforms[name];
         let channels = self.mapToChannels(name, message);
         // Like _.uniq
-        channels = [...new Set(channels)]; 
+        channels = [...new Set(channels)];
         await self.platforms[name](message.req, options, channels, message);
       }
     };
@@ -164,16 +163,8 @@ module.exports = {
         if (!(options.webhooks && options.webhooks[channel])) {
           throw new Error('You must configure the webhooks option for each channel used when configuring the `apostrophe-external-notifications` module for slack');
         }
-        const args = {
-          method: 'POST', 
-          uri: options.webhooks[channel],
-          json: true,
-          body: {
-            text: message.formatted
-          }
-        };
         await rp({
-          method: 'POST', 
+          method: 'POST',
           uri: options.webhooks[channel],
           json: true,
           body: {
