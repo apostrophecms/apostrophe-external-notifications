@@ -133,4 +133,40 @@ describe('apostrophe-external-notifications', function() {
     });
   });
 
+  it('modify the home page, then force export a single widget', function() {
+    apos.external.seen = [];
+    let home;
+    const req = apos.tasks.getReq({ locale: 'default-draft' });
+    return apos.pages.find(req, { slug: '/' }).toObject().then(function(_home) {
+      assert(_home);
+      home = _home;
+      home.homePageText = home.homePageText || { type: 'area', items: [] };
+      home.homePageText.items.push({
+        type: 'apostrophe-rich-text',
+        content: '<h4>Hi Mom</h4>',
+        _id: 'zotlkapow'
+      });
+      home.homePageText.items.push({
+        type: 'apostrophe-rich-text',
+        content: '<h4>Bye Mom</h4>',
+        _id: 'fingerpippin'
+      });
+      return util.promisify(apos.pages.update)(req, home, {});
+    }).then(function() {
+      req.user.username = 'admin';
+      req.user.title = 'Admin Person';
+      return util.promisify(apos.workflow.forceExportWidget)(req, home._id, 'fingerpippin', [ 'fr' ]);
+    }).then(function() {
+      // Allow time for the fact that external-notifications does not guarantee
+      // instant delivery
+      return delay(2000);
+    }).then(function() {
+      const seen = apos.external.seen;
+      assert(seen[0].channels[0] === '#shared');
+      assert(seen[0].channels.length === 1);
+      assert(seen[0].message.formatted === 'Admin Person (admin) force-exported a Rich Text widget on the page Modified from default to fr');
+      assert(seen.length === 1);
+    });
+  });
+
 });

@@ -188,6 +188,9 @@ module.exports = {
       self.notifyOn('apostrophe-workflow:afterForceExport', (req, exported) => [
         '{user} force-exported the {type} {title} from {string} to {string}', exported.from, exported.from, liveify(exported.from.workflowLocale), liveify(exported.toLocales)
       ]);
+      self.notifyOn('apostrophe-workflow:afterForceExportWidget', (req, exported) => [
+        '{user} force-exported a {string} widget on the {type} {title} from {string} to {string}', exported.widgetLabel, exported.from, exported.from, liveify(exported.from.workflowLocale), liveify(exported.toLocales)
+      ]);
       // Change en-draft to en, or [en-draft] to [en]
       function liveify(a) {
         const workflow = self.apos.modules['apostrophe-workflow'];
