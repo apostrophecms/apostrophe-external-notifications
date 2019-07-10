@@ -17,7 +17,7 @@ module.exports = {
 
     self.notifyOn = function(event, fn) {
 
-      self.on(event, 'notify' + self.apos.utils.capitalizeFirst(event), async function() {
+      self.on(event, 'notifyWrapper' + event, async function() {
         const req = (arguments[0] && arguments[0].res && arguments[0].res.__) ? arguments[0] : null;
         let formatArgs = await fn.apply(null, arguments);
         const formatted = self.format(req, formatArgs[0], ...formatArgs.slice(1));
