@@ -139,5 +139,4 @@ Note that `req` **may be undefined** in cases where an event is global and not c
 
 `message.formatted` contains the message to be sent, as a string. Placeholders have already been resolved, the message is complete and ready to send.
 
-> Although our platform handler function is `async` and `await`s each message, for the sake of performance `apostrophe-external-notifications` will not wait for each message to be completely sent before allowing the original Apostrophe event handler to return. However, for the sake of consistency the module does guarantee that notifications sent for a specific `req` will be delivered in order relative to their peers. Those with no `req` are also sent in order.
-
+> Although our platform handler function is `async` and `await`s each channel's message delivery to Slack, for the sake of performance `apostrophe-external-notifications` will not wait for the handler to finish before allowing the original Apostrophe event handler to return. However, for the sake of consistency the module does guarantee that notifications sent for a specific `req` will be delivered in order relative to their peers. Those with no `req` are also sent in order.
